@@ -2,15 +2,12 @@ import express from "express";
 import dotenv from "dotenv";
 import { connectDb } from "./config/db.js";
 import { Product } from "./models/Product.js";
+import mongoose from "mongoose";
 
 dotenv.config();
 const app = express();
 
 app.use(express.json()); // middleware which allows to accpet JSON data in the req.body
-
-app.get("/", (req, res) => {
-  res.send("server is ready");
-});
 
 // get all products endpoint
 app.get("/api/products", async (req, res) => {
@@ -41,6 +38,25 @@ app.post("/api/products", async (req, res) => {
   } catch (error) {
     console.log("Server error", error.message);
     res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
+app.put("/api/products/:id", async (req, res) => {
+  const { id } = req.params;
+  const product = req.body;
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    res.status(404).json({ success: true, message: "Invalid Product Id" });
+  }
+
+  try {
+    const updatedProduct = await Product.findByIdAndUpdate(id, product, {
+      new: true,
+    });
+    res.status(200).json({ success: true, data: updatedProduct });
+  } catch (error) {
+    console.log("Error in updating product", error.message);
+    res.status(500).json({ success: false, message: "Product not updated" });
   }
 });
 
